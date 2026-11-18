@@ -1,0 +1,34 @@
+{
+  "accountId": "",
+  "plans": [
+    {
+      "key": "inspection",
+      "title": "Roof Inspection",
+      "headline": "Full roof inspection and written report",
+      "description": "A certified inspector checks shingles, flashing, gutters, vents, decking and attic for leaks and storm damage, then delivers a photo report and a no-pressure estimate. The fee is credited toward your project if you proceed.",
+      "price": 149
+    },
+    {
+      "key": "deposit",
+      "title": "Project Deposit",
+      "headline": "Reserve your roofing project",
+      "description": "Deposit that reserves your crew and materials order. It is applied to your final invoice; the remaining balance is billed after the work is complete.",
+      "price": 500
+    },
+    {
+      "key": "flatRate",
+      "title": "Gutter Clean + Roof Tune-Up",
+      "headline": "Flat-rate seasonal maintenance",
+      "description": "Flat-rate service: full gutter and downspout cleaning, debris removal from roof surfaces, sealant touch-ups on exposed fasteners and flashing, and a photo summary.",
+      "price": 350
+    },
+    {
+      "key": "finalBalance",
+      "title": "Final Project Balance",
+      "headline": "Invoiced after job completion",
+      "description": "Holds the one-off final balance invoices (amount is set per job).",
+      "price": 1,
+      "hidden": true
+    }
+  ]
+}

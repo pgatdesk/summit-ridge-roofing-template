@@ -1,196 +1,97 @@
-Welcome to your new TanStack Start app!
+# Summit Ridge Roofing: a Whop Websites template for roofing companies
 
-# Getting Started
+A production-ready, fully hosted website for a US roofing business that demos the whole **deposit → job → final invoice** flow on Whop. Swap the company name, services and pricing in **one file** and ship.
 
-To run this application:
+Built with TanStack Start + React + Tailwind v4, hosted by Whop Websites (`*.whop.site`).
+
+## What is in the box
+
+| Area | What it does | Whop feature |
+| --- | --- | --- |
+| Sections | Hero, services (repair / replacement / inspection), pricing, service area, financing callout, reviews + trust, contact | Websites hosting |
+| Checkout (`/book/:plan`) | `ExpressCheckoutElement` (Apple Pay / Google Pay) + `CheckoutElement` + required `BrandingElement`. No custom card fields. Financing (Klarna, Afterpay, Splitit…) surfaces automatically for approved merchants | Payment Elements |
+| Plans | $149 inspection, $500 deposit, $350 flat-rate service (all editable) | Products + plans |
+| Card on file | After the deposit, a setup-mode checkout saves a card and charges nothing | Setup intents / checkout configurations |
+| Estimate form | Creates a lead on your Whop account, with project details stored as metadata | Members API (lead) |
+| Staff console (`/staff`) | Bill the final balance: auto-charge the saved card **or** email the invoice | Invoices API |
+| Tracking | `estimate_requested`, `service_viewed`, `deposit_started` (+ standard `lead`) via `whop.track`. Page views and checkout events are automatic on whop.site | Pixel |
+
+> **About leads.** Whop retired `POST /leads` (it now returns `410 Gone`). The documented replacement is `POST /members`: a person with no purchases is a member with no access. That is what the estimate form uses, so quote requests appear in your dashboard under **Customers → Members** with the project details in their metadata.
+
+## Re-brand in 10 minutes
+
+1. **Edit `src/site.config.ts`**: company, colours, hero copy, services, service area, financing, reviews, form options. No component changes needed.
+2. **Edit `scripts/catalog.json`**: plan names, descriptions and prices.
+3. **Log in and create your catalog**
+   ```bash
+   npm i -g @whop/cli        # Windows/macOS/Linux; or: curl -fsSL https://whop.com/install.sh | sh (macOS/Linux)
+   whop auth login           # then: whop quickstart
+   npm run provision -- biz_YOURBUSINESSID
+   ```
+   Paste the printed IDs into `src/site.config.ts` (`plans.*.id`, `whop.*`).
+4. **Create your site and deploy**
+   ```bash
+   whop apps init --app_type website --name "Your Roofing Co" --domain your-roofing-co   # new project
+   # or, in this folder: whop apps deploy --app app_XXXX
+   ```
+5. **Protect the staff console**: choose a strong passcode and store it as a secret:
+   ```bash
+   whop apps secrets set --secret "ADMIN_PASSCODE=choose-a-long-random-passcode"
+   ```
+   Until `ADMIN_PASSCODE` is set, `/staff` is disabled.
+6. `npm install && npm run deploy`
+
+## Local development
 
 ```bash
 npm install
-npm run dev
+whop apps dev          # runs vite with WHOP_API_KEY / WHOP_ACCOUNT_ID injected
 ```
 
-# Building For Production
+Open `http://localhost:3000/?debug=1` to see a live log of every `whop.track` call. (The Whop pixel only exists on the hosted domain, so locally events show as "local"; on `*.whop.site` they show as "sent".)
 
-To build this application for production:
+## Verifying the three custom pixel events
 
-```bash
-npm run build
+1. Visit your live site with `?debug=1`. A panel lists events as they fire.
+2. `service_viewed`: expand a service card ("What's included") or open any `/book/:plan` page.
+3. `deposit_started`: click **Pay deposit** or open `/book/deposit`.
+4. `estimate_requested`: submit the estimate form.
+5. Confirm in the Whop dashboard under **Websites** and the pixel/events view (allow ~1 minute). With the CLI: `whop events list`.
+
+## The deposit → job → final invoice flow
+
+1. Customer pays the **$500 deposit** at `/book/deposit` (cards, Apple/Google Pay, financing where offered).
+2. **Step 2** saves a card with a **setup-mode checkout** (`ch_…`). Nothing is charged. The `sint_…` setup intent is confirmed server-side (`confirmCardOnFile`).
+3. After the job, staff open `/staff`, find the customer, enter the remaining balance and choose:
+   - **Auto-charge the stored card**: creates the invoice with `payment_method_id` then `POST /invoices/:id/issue`.
+   - **Email invoice for manual payment**: `POST /invoices/:id/send`.
+
+   The line item is an inline one-off variant, so no per-job plan is needed.
+
+## Requirements and gotchas
+
+- **Business verification.** Whop will not issue invoices until your business account has completed verification (Dashboard → Verification). Checkout and leads work without it.
+- **Financing** (Klarna, Afterpay, Splitit…) is enabled per merchant: apply in your Whop dashboard under Payments → Financing. The site needs no code changes.
+- **Apple Pay** works out of the box on `*.whop.site`. On a custom domain, add it via the Whop Domains API first.
+- **Merchant name at checkout** is your Whop business name; set it to your company name in the dashboard.
+- Prices are USD only (adaptive local-currency pricing is switched off by `npm run provision`).
+- The API version is pinned in `src/lib/whop.server.ts` (`Api-Version-Date`).
+
+## Project layout
+
+```
+src/site.config.ts        <- all content, colours, plan IDs (edit this)
+src/routes/index.tsx      <- landing page
+src/routes/book.$plan.tsx <- checkout (+ card-on-file step)
+src/routes/staff.tsx      <- final-balance invoice console
+src/routes/thanks.tsx     <- return URL for off-site payment steps
+src/components/           <- sections, estimate form, checkout panel, pixel debug panel
+src/lib/api.ts            <- server functions (lead, card-on-file, invoices)
+src/lib/whop.server.ts    <- server-only Whop API helper
+src/lib/track.ts          <- whop.track wrapper
+scripts/provision.mjs     <- creates your Whop catalog from catalog.json
 ```
 
-## Styling
+## License
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Remove `@tailwindcss/vite` and `tailwindcss` from `package.json`
-
-
-## Deploy to Cloudflare Workers
-
-This project uses the Cloudflare Vite plugin (configured in `vite.config.ts`) and `wrangler.jsonc`:
-
-1. Install Wrangler: `npm install -g wrangler`
-2. Authenticate: `wrangler login`
-3. Deploy: `npx wrangler deploy`
-
-For production env vars, run `wrangler secret put MY_VAR` for each secret listed in `.env.example`. Public (non-secret) vars go in `wrangler.jsonc` under `vars`.
-
-KV, D1, R2, and Durable Object bindings are configured in `wrangler.jsonc` — see https://developers.cloudflare.com/workers/wrangler/configuration/.
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+MIT. Original code. No marketplace theme was used.
