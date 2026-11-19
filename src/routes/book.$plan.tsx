@@ -74,6 +74,11 @@ function BookPage() {
           </aside>
 
           <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-7" aria-live="polite">
+            {site.whop.environment === 'sandbox' && (
+              <p role="note" className="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                <strong>Test mode: no real charges.</strong> Pay with the test card <span className="font-mono">4242 4242 4242 4242</span>, any future expiry, any CVC and any ZIP.
+              </p>
+            )}
             {step === 'pay' && (
               <>
                 <h2 className="mb-4 text-lg font-bold">Payment</h2>

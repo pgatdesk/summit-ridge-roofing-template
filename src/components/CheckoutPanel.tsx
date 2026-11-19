@@ -41,7 +41,7 @@ export function CheckoutPanel({ plan, checkoutConfiguration, returnUrl, onComple
   const key = checkoutConfiguration ?? plan
 
   return (
-    <WhopElements elements={elements}>
+    <WhopElements elements={elements} environment={site.whop.environment}>
       <div className="grid gap-4">
         {express && !checkoutConfiguration && (
           <>

@@ -20,8 +20,11 @@ function env(name: string): string | undefined {
   return (typeof process !== 'undefined' ? process.env?.[name] : undefined) || undefined
 }
 
+const isSandbox = site.whop.environment === 'sandbox'
+
 export function accountId(): string {
-  return env('WHOP_ACCOUNT_ID') || site.whop.accountId
+  // In sandbox the hosting runtime's WHOP_ACCOUNT_ID is the *production* business: ignore it.
+  return (isSandbox ? undefined : env('WHOP_ACCOUNT_ID')) || site.whop.accountId
 }
 
 export async function whop<T = any>(
@@ -32,8 +35,11 @@ export async function whop<T = any>(
 ): Promise<T> {
   // Hosted on Whop: an outbound proxy signs requests to WHOP_API_ORIGIN, so no key is visible here.
   // Local `whop apps dev`: a short-lived WHOP_API_KEY is injected instead.
-  const key = env('WHOP_API_KEY')
-  const origin = env('WHOP_API_ORIGIN') || 'https://api.whop.com'
+  // Sandbox is a separate Whop with its own keys; the hosting proxy only signs production
+  // calls, so in sandbox mode we send the key from the WHOP_SANDBOX_API_KEY secret ourselves.
+  const key = isSandbox ? env('WHOP_SANDBOX_API_KEY') : env('WHOP_API_KEY')
+  const origin = isSandbox ? 'https://sandbox-api.whop.com' : env('WHOP_API_ORIGIN') || 'https://api.whop.com'
+  if (isSandbox && !key) throw new WhopError(500, 'Sandbox mode needs the WHOP_SANDBOX_API_KEY secret.')
   const res = await fetch(`${origin}/api/v1${path}`, {
     method,
     headers: {

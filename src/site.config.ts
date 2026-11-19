@@ -9,6 +9,31 @@
 
 export type PlanKey = 'inspection' | 'deposit' | 'flatRate'
 
+/**
+ * Which Whop environment the site talks to.
+ *  - 'production': real payments (whop.com)
+ *  - 'sandbox':    test cards, no real money (sandbox.whop.com). Shows a "test mode" banner.
+ * The two environments share no accounts, products or keys, so each has its own IDs
+ * (print them with `npm run provision` / `npm run provision -- --sandbox`).
+ */
+const ENVIRONMENT = 'sandbox' as 'production' | 'sandbox'
+
+const IDS = {
+  production: {
+    accountId: 'biz_GQidznCfMbL3Gs',
+    setupCheckoutConfigId: 'ch_9LVeE5BEPLR5NHa',
+    finalBalanceProductId: 'prod_HklmaWt4O9u72',
+    plans: { inspection: 'plan_WXabZNvYKHE0d', deposit: 'plan_iJFoVdBw0wiEj', flatRate: 'plan_fvUvXcec66Rvp' },
+  },
+  sandbox: {
+    accountId: 'biz_sV1jofjnLuglHr',
+    setupCheckoutConfigId: 'ch_t8NzBMVydFUwYmH',
+    finalBalanceProductId: 'prod_GIZnIitaWLlgF',
+    plans: { inspection: 'plan_6GX9sWhtemUvD', deposit: 'plan_wB2AGxtiUhbOs', flatRate: 'plan_eMoCidymb41dY' },
+  },
+}
+const ids = IDS[ENVIRONMENT]
+
 export interface PlanConfig {
   /** Whop plan id (plan_...) — printed by `npm run provision`. */
   id: string
@@ -57,7 +82,7 @@ export const site = {
    */
   plans: {
     inspection: {
-      id: 'plan_WXabZNvYKHE0d',
+      id: ids.plans.inspection,
       title: 'Roof Inspection',
       price: 149,
       blurb: 'A certified inspector on your roof, a photo report in your inbox.',
@@ -69,7 +94,7 @@ export const site = {
       ],
     },
     deposit: {
-      id: 'plan_iJFoVdBw0wiEj',
+      id: ids.plans.deposit,
       title: 'Project Deposit',
       price: 500,
       blurb: 'Lock in your crew, your materials and your install date.',
@@ -81,7 +106,7 @@ export const site = {
       ],
     },
     flatRate: {
-      id: 'plan_fvUvXcec66Rvp',
+      id: ids.plans.flatRate,
       title: 'Gutter Clean + Roof Tune-Up',
       price: 350,
       blurb: 'Flat-rate seasonal maintenance. One price, no surprises.',
@@ -96,12 +121,14 @@ export const site = {
 
   /** Whop identifiers for server-side flows. */
   whop: {
-    /** Your business id (biz_...). Overridden by the WHOP_ACCOUNT_ID env var when present. */
-    accountId: 'biz_GQidznCfMbL3Gs',
+    /** 'production' (real money) or 'sandbox' (test cards). */
+    environment: ENVIRONMENT,
+    /** Your business id (biz_...) for the active environment. */
+    accountId: ids.accountId,
     /** Setup-mode checkout configuration (ch_...) used to save a card on file. */
-    setupCheckoutConfigId: 'ch_9LVeE5BEPLR5NHa',
+    setupCheckoutConfigId: ids.setupCheckoutConfigId,
     /** Hidden product that holds one-off "final balance" plans for invoices. */
-    finalBalanceProductId: 'prod_HklmaWt4O9u72',
+    finalBalanceProductId: ids.finalBalanceProductId,
   },
 
   services: [

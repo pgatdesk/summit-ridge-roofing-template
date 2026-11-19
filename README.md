@@ -22,13 +22,15 @@ Built with TanStack Start + React + Tailwind v4, hosted by Whop Websites (`*.who
 
 1. **Edit `src/site.config.ts`**: company, colours, hero copy, services, service area, financing, reviews, form options. No component changes needed.
 2. **Edit `scripts/catalog.json`**: plan names, descriptions and prices.
-3. **Log in and create your catalog**
+3. **Create your catalog** with an API key from [whop.com/dashboard/developer](https://whop.com/dashboard/developer) (or [sandbox.whop.com/dashboard/developer](https://sandbox.whop.com/dashboard/developer) for test mode):
    ```bash
-   npm i -g @whop/cli        # Windows/macOS/Linux; or: curl -fsSL https://whop.com/install.sh | sh (macOS/Linux)
-   whop auth login           # then: whop quickstart
-   npm run provision -- biz_YOURBUSINESSID
+   # PowerShell: $env:WHOP_API_KEY="apik_..."     bash: export WHOP_API_KEY=apik_...
+   npm run provision                # production
+   npm run provision -- --sandbox   # sandbox (test cards, no real money)
    ```
-   Paste the printed IDs into `src/site.config.ts` (`plans.*.id`, `whop.*`).
+   Paste the printed IDs into the matching block of `IDS` at the top of `src/site.config.ts`.
+   Set `ENVIRONMENT` there to `'sandbox'` or `'production'`. Sandbox mode shows a "test mode" banner on checkout.
+   For sandbox, also store the sandbox key as a secret: `whop apps secrets set --secret "WHOP_SANDBOX_API_KEY=apik_..."`.
 4. **Create your site and deploy**
    ```bash
    whop apps init --app_type website --name "Your Roofing Co" --domain your-roofing-co   # new project
@@ -70,7 +72,8 @@ Open `http://localhost:3000/?debug=1` to see a live log of every `whop.track` ca
 
 ## Requirements and gotchas
 
-- **Business verification.** Whop will not issue invoices until your business account has completed verification (Dashboard → Verification). Checkout and leads work without it.
+- **Business verification.** Whop will not issue invoices until the business account has completed verification (Dashboard → Verification), in sandbox too. Checkout and leads work without it.
+- **Test mode vs production.** `ENVIRONMENT` in `src/site.config.ts` switches plan IDs, API origin and the Payment Elements `environment`. Sandbox and production share no accounts, keys or plans.
 - **Financing** (Klarna, Afterpay, Splitit…) is enabled per merchant: apply in your Whop dashboard under Payments → Financing. The site needs no code changes.
 - **Apple Pay** works out of the box on `*.whop.site`. On a custom domain, add it via the Whop Domains API first.
 - **Merchant name at checkout** is your Whop business name; set it to your company name in the dashboard.
